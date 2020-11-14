@@ -6,6 +6,8 @@
 // - Adafruit Unified Sensor Lib: https://github.com/adafruit/Adafruit_Sensor
 
 #include "DHT.h"
+#include "Wire.h"
+#include "Adafruit_LiquidCrystal.h"
 
 #define DHTPIN 2     // Digital pin connected to the DHT sensor
 // Feather HUZZAH ESP8266 note: use pins 3, 4, 5, 12, 13 or 14 --
@@ -29,19 +31,22 @@
 // as the current DHT reading algorithm adjusts itself to work on faster procs.
 DHT dht(DHTPIN, DHTTYPE);
 
+// Connect via i2c, default address #0 (A0-A2 not jumpered)
+Adafruit_LiquidCrystal lcd(0);
+
 void setup() {
   Serial.begin(9600);
   Serial.println(F("DHTxx test!"));
 
   dht.begin();
   pinMode(3, OUTPUT);
+  lcd.begin(16, 2);
+  lcd.print("Humidity bot");
+  lcd.setBacklight(LOW);
 }
 
 
 void loop() {
-  // Wait a few seconds between measurements.
-  delay(2000);
-
   // Reading temperature or humidity takes about 250 milliseconds!
   // Sensor readings may also be up to 2 seconds 'old' (its a very slow sensor)
   float h = dht.readHumidity();
@@ -68,6 +73,13 @@ void loop() {
   // Compute heat index in Celsius (isFahreheit = false)
   float hic = dht.computeHeatIndex(t, h, false);
 
+  lcd.setCursor(0, 1);
+  lcd.print(h);
+  lcd.print("% - ");
+  lcd.print(f);
+  lcd.print("F");
+  
+
   Serial.print(F("Humidity: "));
   Serial.print(h);
   Serial.print(F("%  Temperature: "));
@@ -79,4 +91,8 @@ void loop() {
   Serial.print(F("°C "));
   Serial.print(hif);
   Serial.println(F("°F"));
+  
+  // Wait a few seconds between measurements.
+  delay(2000);
+  //delay(1000*60*5);
 }
