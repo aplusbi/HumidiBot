@@ -18,6 +18,8 @@
 #define DHTTYPE DHT22   // DHT 22  (AM2302), AM2321
 //#define DHTTYPE DHT21   // DHT 21 (AM2301)
 
+#define HUMPIN 3
+
 // Connect pin 1 (on the left) of the sensor to +5V
 // NOTE: If using a board with 3.3V logic like an Arduino Due connect pin 1
 // to 3.3V instead of 5V!
@@ -55,11 +57,11 @@ void loop() {
   // Read temperature as Fahrenheit (isFahrenheit = true)
   float f = dht.readTemperature(true);
 
-  if (h > 95) {
-    digitalWrite(3, LOW);
+  if (h > 85) {
+    digitalWrite(HUMPIN, LOW);
   }
-  else if (h < 85) {
-    digitalWrite(3, HIGH);
+  else if (h < 75) {
+    digitalWrite(HUMPIN, HIGH);
   }
 
   // Check if any reads failed and exit early (to try again).
