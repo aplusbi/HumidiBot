@@ -1,13 +1,5 @@
 #include <RTClib.h>
 #include <avr/sleep.h>
-
-// Example testing sketch for various DHT humidity/temperature sensors
-// Written by ladyada, public domain
-
-// REQUIRES the following Arduino libraries:
-// - DHT Sensor Library: https://github.com/adafruit/DHT-sensor-library
-// - Adafruit Unified Sensor Lib: https://github.com/adafruit/Adafruit_Sensor
-
 #include "DHT.h"
 #include "Wire.h"
 #include "Adafruit_LiquidCrystal.h"
@@ -21,8 +13,6 @@ enum BotState {
 };
 
 #define DHTPIN 2     // Digital pin connected to the DHT sensor
-// Feather HUZZAH ESP8266 note: use pins 3, 4, 5, 12, 13 or 14 --
-// Pin 15 can work but DHT must be disconnected during program upload.
 
 // Uncomment whatever type you're using!
 //#define DHTTYPE DHT11   // DHT 11
@@ -33,17 +23,11 @@ enum BotState {
 #define LITPIN 5    // Pin for the lights
 #define ARMPIN 3    // Pin for the alarm Interrupt
 
-// Connect pin 1 (on the left) of the sensor to +5V
-// NOTE: If using a board with 3.3V logic like an Arduino Due connect pin 1
-// to 3.3V instead of 5V!
-// Connect pin 2 of the sensor to whatever your DHTPIN is
-// Connect pin 4 (on the right) of the sensor to GROUND
-// Connect a 10K resistor from pin 2 (data) to pin 1 (power) of the sensor
+volatile BotState ALARM_FLAG = ACTIVE;
+DateTime TURN_OFF_TIME = DateTime(2020, 01, 01, 18);
+DateTime TURN_ON_TIME = DateTime(2020, 01, 01, 7);
 
 // Initialize DHT sensor.
-// Note that older versions of this library took an optional third parameter to
-// tweak the timings for faster processors.  This parameter is no longer needed
-// as the current DHT reading algorithm adjusts itself to work on faster procs.
 DHT dht(DHTPIN, DHTTYPE);
 
 // Connect via i2c, default address #0 (A0-A2 not jumpered)
@@ -67,10 +51,6 @@ void setup() {
   initializeAlarms();
 }
 
-volatile BotState ALARM_FLAG = ACTIVE;
-DateTime TURN_OFF_TIME = DateTime(2020, 01, 01, 18);
-DateTime TURN_ON_TIME = DateTime(2020, 01, 01, 7);
-
 void initializeAlarms() {
   rtc.disableAlarm(1);
   rtc.disableAlarm(2);
@@ -80,7 +60,7 @@ void initializeAlarms() {
   rtc.writeSqwPinMode(DS3231_OFF);
 
   // Set the bot to turn off at 6pm.
-  // If the bot should start off, set the turn off time to 5 seconds from now.
+  // If the bot should start off, set the flag to off.
   DateTime now = rtc.now();
   if (now.hour() >= TURN_OFF_TIME.hour() || now.hour() < TURN_ON_TIME.hour()) {
     ALARM_FLAG = TURN_OFF;
@@ -96,11 +76,13 @@ void initializeAlarm(DateTime alarm, IntFunction isr) {
   interrupts();
 }
 
+// Interrupt function to turn off the bot.
 void turnOffIsr() {
   ALARM_FLAG = TURN_OFF;
   detachInterrupt(digitalPinToInterrupt(ARMPIN));
 }
 
+// Interrupt function to turn on the bot.
 void turnOnIsr() {
   ALARM_FLAG = TURN_ON;
   sleep_disable();
@@ -164,9 +146,8 @@ void loop() {
   Serial.println(now.timestamp());
 
   printLCDHeader(now);
-  
-  // Reading temperature or humidity takes about 250 milliseconds!
-  // Sensor readings may also be up to 2 seconds 'old' (its a very slow sensor)
+
+  // Read the humidity
   float h = dht.readHumidity();
   // Read temperature as Celsius (the default)
   float t = dht.readTemperature();
