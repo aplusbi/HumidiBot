@@ -94,6 +94,7 @@ void turnOff() {
     
     lcd.clear();
     lcd.print("Sleep until 7:00");
+    lcd.setBacklight(LOW);
     
     sleep_enable();
     set_sleep_mode(SLEEP_MODE_PWR_DOWN);
@@ -114,6 +115,7 @@ void turnOn() {
     ALARM_FLAG = ACTIVE;
 
     lcd.clear();
+    lcd.setBacklight(HIGH);
     
     Serial.print("Turning on at ");
     Serial.println(rtc.now().timestamp());
